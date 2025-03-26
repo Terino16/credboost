@@ -1,0 +1,108 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String   @id @default(cuid())
+  name             String?
+  age              Int?
+  source           String?
+  subscriptionLevel SubscriptionLevel
+  spaces           Space[]
+}
+
+model Space {
+  id          String   @id @default(cuid())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+  product     Product  @relation(fields: [productId], references: [id])
+  productId   String
+  name        String
+  description String?
+  logoUrl     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  forms       Form[]
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  spaces      Space[]
+}
+
+model Form {
+  id                   String    @id @default(cuid())
+  space                Space     @relation(fields: [spaceId], references: [id])
+  spaceId              String
+  title                String
+  description          String?
+  logoUrl              String?
+  requireAuthentication Boolean   @default(false)
+  offerDiscount        Boolean   @default(false)
+  discountCode         String?
+  discountValue        String?
+  thankYouMessage      String
+  publicLink           String    @unique
+  createdAt            DateTime  @default(now())
+  questions            Question[]
+  reviews              Review[]
+}
+
+model Question {
+  id       String     @id @default(cuid())
+  form     Form       @relation(fields: [formId], references: [id])
+  formId   String
+  text     String
+  required Boolean    @default(false)
+  type     QuestionType
+  options  String[]   @default([])
+  order    Int
+  answers  Answer[]
+}
+
+model Review {
+  id           String   @id @default(cuid())
+  form         Form     @relation(fields: [formId], references: [id])
+  formId       String
+  content      String
+   rating      Int      @default(0)
+  submittedAt  DateTime @default(now())
+  answers      Answer[]
+}
+
+model Answer {
+  id         String  @id @default(cuid())
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id])
+  value      String
+  reviewId   String
+  review     Review   @relation(fields: [reviewId], references: [id])
+}
+
+enum QuestionType {
+  text
+  textarea
+  radio
+  checkbox
+}
+
+enum SubscriptionLevel {
+  free
+  paid
+  ultra_premium
+}
+
